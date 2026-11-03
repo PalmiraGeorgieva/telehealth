@@ -1,15 +1,18 @@
 // BottomTabNavigation
-
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 
 import HomeScreen from "../screens/HomeScreen";
 import TherapiesScreen from "../screens/TherapiesScreen";
 import ProfileScreen from "../screens/ProfileScreen";
+import TherapyDetailsScreen from '../screens/TherapyDetailsScreen';
+import TherapyFormScreen from '../screens/TherapyFormScreen';
 
+const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-export default function AppNavigator() {
+function MainTabs() {
     return (
         <Tab.Navigator
           screenOptions={({ route }) => ({
@@ -48,4 +51,29 @@ export default function AppNavigator() {
     );
 }
 
-
+export default function AppNavigator() {
+    return (
+        <Stack.Navigator screenOptions={{
+            headerStyle: {
+                backgroundColor: '#F4FAF6',
+            },
+            headerTintColor: '#237A57',
+        }}>
+            <Stack.Screen
+              name="MainTabs"
+              component={MainTabs}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+               name="TherapyDetails"
+               component={TherapyDetailsScreen}
+               options={{ title: 'Therapy Details' }}
+            />
+            <Stack.Screen
+               name="TherapyForm"
+               component={TherapyFormScreen}
+               options={{ title: 'Add Therapy'}}
+            />
+        </Stack.Navigator>
+    );
+}
