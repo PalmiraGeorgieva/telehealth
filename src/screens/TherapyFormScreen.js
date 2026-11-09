@@ -1,11 +1,30 @@
-import { View, Text, TextInput, Pressable, ScrollView, Alert, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Pressable, ScrollView, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { useState } from 'react';
+import { Picker } from '@react-native-picker/picker';
+import {DateTimePickerAndroid} from '@react-native-community/datetimepicker';
 
 export default function TherapyFormScreen() {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [duration, setDuration] = useState('');
     const [errors, setErrors] = useState({});
+    const [therapyType, setTherapyType] = useState('');
+    const [startDate, setStartDate] = useState(new Date());
+
+    const openDatePicker = () => {
+        DateTimePickerAndroid.open({
+            value: startDate,
+            mode: 'date',
+            display: 'default',
+
+            onChange: (event, selectedDate) => {
+                if (event.type === 'set' && selectedDate != null) {
+                   setStartDate(selectedDate);
+                }
+
+            },
+        });
+    };
 
     const validateForm = () => {
         const newErrors = {};
@@ -27,6 +46,10 @@ export default function TherapyFormScreen() {
             Number(duration) <= 0
         ) {
             newErrors.duration = 'Ente a valid duration in minutes.';
+        }
+
+        if (!therapyType) {
+            newErrors.therapyType = 'Please select a therapy type.';
         }
 
         setErrors(newErrors);
@@ -64,6 +87,44 @@ export default function TherapyFormScreen() {
                 {errors.name ? (
                     <Text style={styles.errorText}>{errors.name}</Text>
                 ) : null}
+
+            <Text style={styles.label}>Therapy Type *</Text>
+            <View style={styles.pickerContainer}>
+                <Picker
+                   selectedValue={therapyType}
+                   onValueChange={(value) => {
+                    setTherapyType(value);
+                    if (errors.therapyType) {
+                        setErrors((prev) => ({
+                            ...prev,
+                            therapyType: '',
+                        }));
+                    }
+                   }}
+                   style={styles.picker}
+                >
+                    <Picker.Item label="Select therapy type..." value="" />
+                    <Picker.Item label='Speech Therapy' value="speech" />
+                    <Picker.Item label='Physical Therapy' value="physical" />
+                    <Picker.Item label='Occupational Therapy' value="occupational" />
+                    <Picker.Item label='Psycological Therapy' value="psychological" />
+                    <Picker.Item label='Other' value="other" />
+                </Picker>
+            </View>
+
+            {errors.therapyType ? (
+                <Text style={styles.errorText}>{errors.therapyType}</Text>
+            ) : null}
+            <Text style={styles.label}>Start Date *</Text>
+            <Pressable
+                style={styles.dateButton}
+                onPress={openDatePicker}
+            >
+                <Text style={styles.dateText}>
+                    {startDate.toLocaleDateString('bg-BG')}
+                </Text>
+             </Pressable>
+
             <Text style={styles.label}>Description *</Text>
             <TextInput
                style={[styles.input, styles.textArea]}
@@ -73,8 +134,8 @@ export default function TherapyFormScreen() {
                multiline
                textAlignVertical='top'
             />
-                {errors.name ? (
-                    <Text style={styles.errorText}>{errors.name}</Text>
+                {errors.description ? (
+                    <Text style={styles.errorText}>{errors.description}</Text>
                 ) : null}
             <Text style={styles.label}>Duration (minutes) *</Text>
             <TextInput
@@ -84,8 +145,8 @@ export default function TherapyFormScreen() {
               onChangeText={setDuration}
               keyboardType='number-pad'
             />
-                {errors.name ? (
-                    <Text style={styles.errorText}>{errors.name}</Text>
+                {errors.duration ? (
+                    <Text style={styles.errorText}>{errors.duration}</Text>
                 ) : null}
 
             <Pressable style={styles.button} onPress={handleSave}>
@@ -154,5 +215,25 @@ const styles = StyleSheet.create({
         fontSize: 13,
         marginTop: -14,
         marginBottom: 14,
+    },
+    pickerContainer: {
+        backgroundColor: '#FFF',
+        borderWidth: 1,
+        borderColor: '#C8DCD0',
+        borderRadius: 10,
+        marginBottom: 20,
+        overflow: 'hidden',
+    },
+    dateButton: {
+        backgroundColor: '#FFF',
+        borderWidth: 1,
+        borderColor: '#C8DCD0',
+        borderRadius: 10,
+        padding: 16,
+        marginBottom: 20,
+    },
+    dateText: {
+        fontSize: 16,
+        color: '#333',
     },
 });
