@@ -83,21 +83,22 @@ export default function TherapiesScreen({ navigation }) {
             <View style={styles.header}>
                 <Text style={styles.title}>My Therapies</Text>
                 <Pressable
-                   styles={styles.addButton}
+                   style={styles.addButton}
                    onPress={() => navigation.navigate('TherapyForm')}
                 >
                     <Ionicons
                        name='add'
-                       size={26}
-                       color='fff'
+                       size={18}
+                       color='#fff'
                     />
+                    <Text style={styles.addButtonText}>Add Therapy</Text>
                 </Pressable>
             </View>
             {loading ? (
                 <ActivityIndicator size='large' color='#237a57' style={styles.loader} />
             ) : error ? (
                  <View style={styles.emptyContainer}>
-                    <Text style={styles.errortext}>{error}</Text>
+                    <Text style={styles.errorText}>{error}</Text>
                     <Pressable onPress={fetchTherapies}>
                         <Text style={styles.retryText}>Try again</Text>
                     </Pressable>
@@ -147,11 +148,17 @@ const styles = StyleSheet.create({
     },
     addButton: {
         backgroundColor: '#237A57',
-        width: 44,
-        height: 44,
-        borderRadius: 12,
+        flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
+        gap: 4,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 20,
+    },
+    addButtonText: {
+        color: '#fff',
+        fontSize: 13,
+        fontWeight: '500',
     },
     listContent: {
         paddingBottom: 30,

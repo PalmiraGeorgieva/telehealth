@@ -1,12 +1,73 @@
-import { View, Text, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
-import { useState } from 'react';
+import { View, Text, Image, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
+import { useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
+import { useFocusEffect } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function ProfileScreen() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [userEmail, setUserEmail] = useState('');
+    const [profileLoading, setProfileLoading] = useState(true);
+    const [profileImage, setProfileImage] = useState(null);
 
-    // const user = supabase.auth.getUser;
+    useFocusEffect(
+        useCallback(() => {
+            let active = true;
+
+            const loadProfile = async () => {
+                setProfileLoading(true);
+                setError('');
+
+                try {
+                    const { data: {user}, error: userError, } = await supabase.auth.getUser();
+
+                    if(userError || !user) {
+                        throw new Error("Unable to load profile.");
+
+                    }
+
+                    if(active) {
+                        setUserEmail(user.email ?? '');
+                    }
+                } catch (error) {
+                    if(active) {
+                        setError(error.message || 'Failed to load profile.');
+                    }
+                } finally {
+                    if(active) {
+                        setProfileLoading(false);
+                    }
+                }
+            };
+            loadProfile();
+
+            return () => {
+                active = false;
+            };
+        }, [])
+    );
+
+    const pickImage = async () => {
+        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+        if(!permission.granted) {
+            setError('Gallery permission is required.');
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.8,
+        });
+
+        if (!result.canceled && result.assets?.length > 0) {
+            setProfileImage(result.assets[0].uri);
+            setError('');
+        }
+    }
 
     const handleLogout = async () => {
         if (loading) return;
@@ -32,12 +93,29 @@ export default function ProfileScreen() {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>My Profile</Text>
-            <Text style={styles.subtitle}>Manage your account and personal information.</Text>
+            <View style={styles.avatarContainer}>
+                {profileImage ? (
+                    <Image source={{ uri: profileImage }} style={styles.avatar} />
+                ) : (
+                    <View style={styles.avatarPlaceholder}>
+                        <Text style={styles.avatarInitial}>👤</Text>
+                    </View>
+                )}
 
+                <Pressable style={styles.photoButton} onPress={pickImage}>
+                    <Text style={styles.photoButtonText}>Change Photo</Text>
+                </Pressable>
+            </View>
             <View style={styles.card}>
-                <Text style={styles.cardTitle}>Account</Text>
-                <Text style={styles.cardText}>You are currently signed in.</Text>
+
+                {profileLoading ? (
+                   <ActivityIndicator color='#237a57' />
+                ): (
+                    <>
+                       <Text style={styles.emalLabel}>Email address</Text>
+                       <Text style={styles.emailText}>{userEmail || 'Email unavailable'}</Text>
+                    </>
+                )}
             </View>
             {error ? (
                 <Text style={styles.errorText}>{error}</Text>
@@ -111,5 +189,55 @@ const styles = StyleSheet.create({
     errorText: {
         color: '#D64545',
         marginBottom: 14,
+    },
+    emailLabel: {
+        fontSize: 13,
+        color: '#777',
+        marginTop: 16,
+        marginBottom: 4,
+    },
+
+    emailText: {
+        fontSize: 15,
+        color: '#333',
+        fontWeight: '500',
+    },
+    avatarContainer: {
+        alignItems: 'center',
+        marginBottom: 24,
+    },
+
+    avatar: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        marginBottom: 12,
+    },
+
+    avatarPlaceholder: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        backgroundColor: '#E0F0E6',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 12,
+    },
+
+    avatarInitial: {
+        fontSize: 42,
+    },
+
+    photoButton: {
+        backgroundColor: '#237A57',
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 20,
+    },
+
+    photoButtonText: {
+        color: '#fff',
+        fontSize: 13,
+        fontWeight: '600',
     },
 });

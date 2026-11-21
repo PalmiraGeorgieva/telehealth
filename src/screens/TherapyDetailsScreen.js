@@ -177,42 +177,35 @@ export default function TherapyDetailsScreen({ route, navigation }) {
                   {therapy.description || 'No descripton.'}
                </Text>
             </View>
-            <Pressable
-              style={styles.editButton}
-              onPress={() => navigation.navigate('TherapyForm', {
-                therapyId: therapy.id,
-              })}
-            >
-                <Ionicons
-                   name='create-outline'
-                   size={20}
-                   color='#fff'
-                 />
-                <Text style={styles.backButtonText}>Edit Therapy</Text>
-            </Pressable>
-            <Pressable
-               style={styles.deleteButton}
-               onPress={handleDelete}
-            >
-                <Ionicons
-                   name='trash-outline'
-                   size={20}
-                   color='#fff'
-                />
-                <Text style={styles.backButtonText}>Delete Therapy</Text>
+            <View style={styles.actionsContainer}>
+                <Pressable
+                    style={[styles.actionButton, styles.editButton]}
+                    onPress={() =>
+                        navigation.navigate('TherapyForm', {
+                            therapyId: therapy.id,
+                        })
+                    }
+                >
+                    <Ionicons name="pencil" size={16} color="#fff" />
+                    <Text style={styles.actionButtonText}>Edit</Text>
+                </Pressable>
 
-            </Pressable>
-            <Pressable
-               style={styles.backButton}
-               onPress={() => navigation.goBack()}
-            >
-                <Ionicons
-                   name='arrow-back'
-                   size={20}
-                   color='#fff'
-                 />
-               <Text style={styles.backButtonText}>Back to Therapies</Text>
-            </Pressable>
+                <Pressable
+                    style={[styles.actionButton, styles.deleteButton]}
+                    onPress={handleDelete}
+                >
+                    <Ionicons name="trash-outline" size={16} color="#fff" />
+                    <Text style={styles.actionButtonText}>Delete</Text>
+                </Pressable>
+
+                <Pressable
+                    style={[styles.actionButton, styles.backButton]}
+                    onPress={() => navigation.goBack()}
+                >
+                    <Ionicons name="arrow-back" size={16} color="#fff" />
+                    <Text style={styles.actionButtonText}>Back</Text>
+                </Pressable>
+            </View>
         </ScrollView>
     );
 }
@@ -273,21 +266,6 @@ const styles = StyleSheet.create({
         color: '#444',
         lineHeight: 23,
     },
-    backButton: {
-        backgroundColor: '#237A57',
-        padding: 15,
-        borderRadius: 12,
-        marginTop: 20,
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        gap: 10,
-    },
-    backButtonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
     errorText: {
         color: '#C0392B',
         textAlign: 'center',
@@ -297,24 +275,41 @@ const styles = StyleSheet.create({
         color: '#237A57',
         fontWeight: 'bold',
     },
+    actionsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: 10,
+        marginTop: 20,
+    },
+
+    actionButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 5,
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        borderRadius: 20,
+        minHeight: 44,
+    },
+
+    actionButtonText: {
+        color: '#fff',
+        fontSize: 13,
+        fontWeight: '600',
+    },
+
     editButton: {
         backgroundColor: '#237A57',
-        padding: 15,
-        borderRadius: 12,
-        marginTop: 20,
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        gap: 10,
     },
+
     deleteButton: {
         backgroundColor: '#C0392B',
-        padding: 15,
-        borderRadius: 12,
-        marginTop: 12,
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        gap: 10,
+    },
+
+    backButton: {
+        backgroundColor: '#64748B',
     },
 });
