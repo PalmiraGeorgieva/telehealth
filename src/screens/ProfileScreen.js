@@ -2,7 +2,6 @@ import { View, Text, StyleSheet, Pressable, ActivityIndicator } from 'react-nati
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 
-
 export default function ProfileScreen() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');

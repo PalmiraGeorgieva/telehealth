@@ -1,15 +1,95 @@
-import { View, Text, TextInput, Pressable, ScrollView, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
-import { useState } from 'react';
+import { View, Text, TextInput, Pressable, ScrollView, Keyboard, StyleSheet, ActivityIndicator } from 'react-native';
+import { useState, useEffect } from 'react';
 import { Picker } from '@react-native-picker/picker';
 import {DateTimePickerAndroid} from '@react-native-community/datetimepicker';
+import { supabase } from '../lib/supabase';
 
-export default function TherapyFormScreen() {
+export default function TherapyFormScreen({ route, navigation }) {
+    const { therapyId } = route.params ?? {};
+    const isEditing = Boolean(therapyId);
+
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [duration, setDuration] = useState('');
     const [errors, setErrors] = useState({});
     const [therapyType, setTherapyType] = useState('');
     const [startDate, setStartDate] = useState(new Date());
+    const [saving, setSaving] = useState(false);
+    const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+    useEffect(() => {
+        if(!isEditing) return;
+
+        let active = true;
+
+        const loadTherapy = async () => {
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+            if (!active) return;
+
+            if (userError || !user) {
+                setErrors(prev => ({
+                    ...prev,
+                    server: 'Please log in again.',
+                }));
+                return;
+            }
+
+            const { data, error } = await supabase
+                .from('therapies')
+                .select('*')
+                .eq('id', therapyId)
+                .eq('user_id', user.id)
+                .single();
+
+            if (!active) return;
+
+            if(error) {
+                setErrors(prev => ({
+                ...prev,
+                server: error.message,
+               }));
+               return;
+            }
+
+            setName(data.name ?? '');
+            setTherapyType(data.therapy_type ?? '');
+            setDescription(data.description ?? '');
+            setDuration(String(data.duration ?? ''));
+
+            if (data.start_date) {
+                const [year, month, day] =
+                    data.start_date.split('-').map(Number);
+
+                setStartDate(new Date(year, month - 1, day));
+            }
+        };
+        loadTherapy();
+
+        return () => {
+            active = false;
+        };
+    }, [isEditing, therapyId]);
+
+    useEffect(() => {
+        const showSubscription = Keyboard.addListener(
+            'keyboardDidShow',
+            (event) => {
+                setKeyboardHeight(event.endCoordinates.height);
+            }
+        );
+
+        const hideSubscription = Keyboard.addListener(
+            'keyboardDidHide',
+            () => {
+                setKeyboardHeight(0);
+            }
+        );
+        return () => {
+            showSubscription.remove();
+            hideSubscription.remove();
+        }
+    }, []);
 
     const openDatePicker = () => {
         DateTimePickerAndroid.open({
@@ -56,27 +136,112 @@ export default function TherapyFormScreen() {
         return Object.keys(newErrors).length === 0;
     }
 
-    const handleSave = () => {
-       if (!validateForm()) {
-         return;
-       }
+    const handleSave = async () => {
+        if (saving || !validateForm()) {
+            return;
+        }
 
-       console.log('Form validation successful');
-    }
+        setSaving(true);
+
+        try {
+            const { data: { user }, error: userError } =
+                await supabase.auth.getUser();
+
+            if (userError || !user) {
+                throw new Error('Please log in again.');
+            }
+
+            const year = startDate.getFullYear();
+            const month = String(startDate.getMonth() + 1).padStart(2, '0');
+            const day = String(startDate.getDate()).padStart(2, '0');
+
+            const formattedDate = `${year}-${month}-${day}`;
+
+            const therapyData = {
+                name: name.trim(),
+                therapy_type: therapyType,
+                description: description.trim(),
+                duration: Number(duration),
+                start_date: formattedDate,
+            };
+
+            let result;
+
+            if (isEditing) {
+                // UPDATE existing therapy
+                result = await supabase
+                    .from('therapies')
+                    .update(therapyData)
+                    .eq('id', therapyId)
+                    .eq('user_id', user.id)
+                    .select('id')
+                    .single();
+
+            } else {
+                // CREATE new therapy
+                result = await supabase
+                    .from('therapies')
+                    .insert({
+                        ...therapyData,
+                        user_id: user.id,
+                    })
+                    .select('id')
+                    .single();
+            }
+
+            if (result.error) {
+                throw result.error;
+            }
+
+            console.log(
+                isEditing
+                    ? 'Therapy updated successfully!'
+                    : 'Therapy created successfully!'
+            );
+
+            if (isEditing) {
+                navigation.goBack();
+            } else {
+                setName('');
+                setTherapyType('');
+                setDescription('');
+                setDuration('');
+                setStartDate(new Date());
+                setErrors({});
+            }
+
+        } catch (error) {
+            setErrors(prev => ({
+                ...prev,
+                server: error.message || 'Failed to save therapy.',
+            }));
+        } finally {
+            setSaving(false);
+        }
+    };
 
     return (
-       <KeyboardAvoidingView
-          style={styles.container}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-       >
-        <ScrollView
-           contentContainerStyle={styles.content}
-           keyboardShouldPersistTaps='handled'
+        <View
+            style={styles.container}
         >
-            <Text style={styles.heading}>Create New Therapy</Text>
-            <Text style={styles.subtitle}>
-                Add information about your therapy session.
-            </Text>
+            <ScrollView
+                style={{ flex: 1 }}
+                contentContainerStyle={[
+                    styles.content,
+                    {
+                        paddingBottom: 100 + keyboardHeight,
+                    }
+                ]}
+                keyboardShouldPersistTaps='handled'
+                showsVerticalScrollIndicator={true}
+
+            >
+            <Text style={styles.heading}> {isEditing ? 'Edit Therapy' : 'Create New Therapy'}</Text>
+                <Text style={styles.subtitle}>
+                    {isEditing
+                        ? 'Update your therapy information.'
+                        : 'Add information about your therapy session.'}
+                </Text>
             <Text style={styles.label}>Therapy Name *</Text>
             <TextInput
                 style={styles.input}
@@ -149,11 +314,27 @@ export default function TherapyFormScreen() {
                     <Text style={styles.errorText}>{errors.duration}</Text>
                 ) : null}
 
-            <Pressable style={styles.button} onPress={handleSave}>
-                <Text style={styles.buttonText}>Save Therapy</Text>
-            </Pressable>
-        </ScrollView>
-       </KeyboardAvoidingView>
+                {errors.server ? (
+                    <Text style={styles.errorText}>
+                        {errors.server}
+                    </Text>
+                ) : null}
+
+                <Pressable
+                    style={[styles.button, saving && { opacity: 0.6 }]}
+                    onPress={handleSave}
+                    disabled={saving}
+                >
+                    {saving ? (
+                        <ActivityIndicator color="#fff" />
+                    ) : (
+                        <Text style={styles.buttonText}>
+                            {isEditing ? 'Update Therapy' : 'Save Therapy'}
+                        </Text>
+                    )}
+                </Pressable>
+            </ScrollView>
+       </View>
     );
 }
 
@@ -164,7 +345,7 @@ const styles = StyleSheet.create({
     },
     content: {
         padding: 20,
-        paddingBottom: 40,
+        paddingBottom: 100,
     },
     heading: {
         fontSize: 24,
