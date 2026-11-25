@@ -1,9 +1,36 @@
-import { NavigationContainer } from "@react-navigation/native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "react-native";
 import AppNavigator from "./src/navigation/AppNavigator";
 import { useEffect } from "react";
 import { supabase } from "./src/lib/supabase";
+import { useAppTheme, ThemeProvider } from "./src/theme/ThemeContext";
+import { NavigationContainer, DarkTheme, DefaultTheme } from "@react-navigation/native";
+
+function AppContent() {
+  const { isDark, theme } = useAppTheme();
+
+  const navigationTheme = {
+    ...(isDark ? DarkTheme : DefaultTheme),
+    colors: {
+      ...(isDark ? DarkTheme.colors : DefaultTheme.colors),
+      primary: theme.primary,
+      background: theme.background,
+      card: theme.surface,
+      text: theme.text,
+      border: theme.border,
+
+    },
+  };
+  return (
+    <NavigationContainer theme={navigationTheme}>
+      <StatusBar
+         barStyle={isDark ? 'light-content' : 'dark-content'}
+         backgroundColor={theme.background}
+      />
+      <AppNavigator />
+    </NavigationContainer>
+  );
+}
 
 export default function App() {
 
@@ -34,10 +61,10 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
-        <StatusBar barStyle="dark-content" />
-        <AppNavigator />
-      </NavigationContainer>
+      <ThemeProvider>
+        <AppContent />
+      </ThemeProvider>
+
     </SafeAreaProvider>
 
   );

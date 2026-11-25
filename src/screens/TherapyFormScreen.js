@@ -3,8 +3,12 @@ import { useState, useEffect } from 'react';
 import { Picker } from '@react-native-picker/picker';
 import {DateTimePickerAndroid} from '@react-native-community/datetimepicker';
 import { supabase } from '../lib/supabase';
+import { useAppTheme } from '../theme/ThemeContext';
 
 export default function TherapyFormScreen({ route, navigation }) {
+    const { theme, isDark } = useAppTheme();
+    const styles = createStyles(theme, isDark);
+
     const { therapyId } = route.params ?? {};
     const isEditing = Boolean(therapyId);
 
@@ -125,7 +129,7 @@ export default function TherapyFormScreen({ route, navigation }) {
             !Number.isInteger(Number(duration)) ||
             Number(duration) <= 0
         ) {
-            newErrors.duration = 'Ente a valid duration in minutes.';
+            newErrors.duration = 'Enter a valid duration in minutes.';
         }
 
         if (!therapyType) {
@@ -199,16 +203,7 @@ export default function TherapyFormScreen({ route, navigation }) {
                     : 'Therapy created successfully!'
             );
 
-            if (isEditing) {
-                navigation.goBack();
-            } else {
-                setName('');
-                setTherapyType('');
-                setDescription('');
-                setDuration('');
-                setStartDate(new Date());
-                setErrors({});
-            }
+            navigation.goBack();
 
         } catch (error) {
             setErrors(prev => ({
@@ -242,12 +237,23 @@ export default function TherapyFormScreen({ route, navigation }) {
                         ? 'Update your therapy information.'
                         : 'Add information about your therapy session.'}
                 </Text>
-            <Text style={styles.label}>Therapy Name *</Text>
-            <TextInput
-                style={styles.input}
-                placeholder='e.g. Speech Therapy'
-                value={name}
-                onChangeText={setName}
+                <Text style={styles.label}>Therapy Name *</Text>
+                <TextInput
+                    style={styles.input}
+
+                    placeholder='e.g. Speech Therapy'
+                    placeholderTextColor={theme.placeholder}
+                    value={name}
+                    onChangeText={(value) => {
+                        setName(value);
+
+                        if (errors.name && value.trim().length >= 3) {
+                            setErrors(prev => ({
+                                ...prev,
+                                name: '',
+                            }));
+                        }
+                    }}
             />
                 {errors.name ? (
                     <Text style={styles.errorText}>{errors.name}</Text>
@@ -267,12 +273,13 @@ export default function TherapyFormScreen({ route, navigation }) {
                     }
                    }}
                    style={styles.picker}
+                   dropdownIconColor={theme.primary}
                 >
                     <Picker.Item label="Select therapy type..." value="" />
                     <Picker.Item label='Speech Therapy' value="speech" />
                     <Picker.Item label='Physical Therapy' value="physical" />
                     <Picker.Item label='Occupational Therapy' value="occupational" />
-                    <Picker.Item label='Psycological Therapy' value="psychological" />
+                    <Picker.Item label='Psychological Therapy' value="psychological" />
                     <Picker.Item label='Other' value="other" />
                 </Picker>
             </View>
@@ -283,6 +290,7 @@ export default function TherapyFormScreen({ route, navigation }) {
             <Text style={styles.label}>Start Date *</Text>
             <Pressable
                 style={styles.dateButton}
+                dropdownIconColor={theme.primary}
                 onPress={openDatePicker}
             >
                 <Text style={styles.dateText}>
@@ -294,8 +302,18 @@ export default function TherapyFormScreen({ route, navigation }) {
             <TextInput
                style={[styles.input, styles.textArea]}
                placeholder='Describe your therapy...'
-               value={description}
-               onChangeText={setDescription}
+               placeholderTextColor={theme.placeholder}
+                    value={description}
+                    onChangeText={(value) => {
+                        setDescription(value);
+
+                        if (errors.description && value.trim().length > 0) {
+                            setErrors(prev => ({
+                                ...prev,
+                                description: '',
+                            }));
+                        }
+                    }}
                multiline
                textAlignVertical='top'
             />
@@ -306,8 +324,23 @@ export default function TherapyFormScreen({ route, navigation }) {
             <TextInput
               style={styles.input}
               placeholder='e.g. 30'
+              placeholderTextColor={theme.placeholder}
               value={duration}
-              onChangeText={setDuration}
+                    onChangeText={(value) => {
+                        setDuration(value);
+
+                        if (
+                            errors.duration &&
+                            value.trim() !== '' &&
+                            Number.isInteger(Number(value)) &&
+                            Number(value) > 0
+                        ) {
+                            setErrors(prev => ({
+                                ...prev,
+                                duration: '',
+                            }));
+                        }
+                    }}
               keyboardType='number-pad'
             />
                 {errors.duration ? (
@@ -326,7 +359,8 @@ export default function TherapyFormScreen({ route, navigation }) {
                     disabled={saving}
                 >
                     {saving ? (
-                        <ActivityIndicator color="#fff" />
+                        <ActivityIndicator color={isDark ? theme.background : '#fff'}
+ />
                     ) : (
                         <Text style={styles.buttonText}>
                             {isEditing ? 'Update Therapy' : 'Save Therapy'}
@@ -338,10 +372,10 @@ export default function TherapyFormScreen({ route, navigation }) {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme, isDark) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F4FAF6',
+        backgroundColor: theme.background,
     },
     content: {
         padding: 20,
@@ -350,24 +384,25 @@ const styles = StyleSheet.create({
     heading: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#237A57',
+        color: theme.primary,
         marginBottom: 8,
     },
     subtitle: {
         fontSize: 14,
-        color: '#666',
+        color: theme.secondaryText,
         marginBottom: 24,
     },
     label: {
         fontSize: 15,
         fontWeight: '600',
-        color: '#333',
+        color: theme.text,
         marginBottom: 8,
     },
     input: {
-        backgroundColor: '#FFF',
+        backgroundColor: theme.surface,
+        color: theme.text,
         borderWidth: 1,
-        borderColor: '#C8DCD0',
+        borderColor: theme.border,
         borderRadius: 10,
         padding: 14,
         fontSize: 16,
@@ -377,44 +412,48 @@ const styles = StyleSheet.create({
         height: 110,
     },
     button: {
-        backgroundColor: '#237A57',
+        backgroundColor: theme.primary,
         padding: 16,
         borderRadius: 10,
         alignItems: 'center',
         marginTop: 8,
     },
     buttonText: {
-        color: '#FFF',
+        color: isDark ? theme.background : '#FFF',
         fontSize: 16,
         fontWeight: 'bold',
     },
     inputError: {
-        borderColor: '#D64545',
+        borderColor: theme.danger,
     },
     errorText: {
-        color: '#D64545',
+        color: theme.danger,
         fontSize: 13,
         marginTop: -14,
         marginBottom: 14,
     },
     pickerContainer: {
-        backgroundColor: '#FFF',
+        backgroundColor: theme.surface,
         borderWidth: 1,
-        borderColor: '#C8DCD0',
+        borderColor: theme.border,
         borderRadius: 10,
         marginBottom: 20,
         overflow: 'hidden',
     },
+    picker: {
+        color: theme.text,
+        backgroundColor: theme.surface,
+    },
     dateButton: {
-        backgroundColor: '#FFF',
+        backgroundColor: theme.surface,
         borderWidth: 1,
-        borderColor: '#C8DCD0',
+        borderColor: theme.border,
         borderRadius: 10,
         padding: 16,
         marginBottom: 20,
     },
     dateText: {
         fontSize: 16,
-        color: '#333',
+        color: theme.text,
     },
 });

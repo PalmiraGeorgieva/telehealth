@@ -14,21 +14,27 @@ import RegisterScreen from '../screens/RegisterScreen';
 import { useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { supabase } from '../lib/supabase';
+import { useAppTheme } from "../theme/ThemeContext";
 
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 function MainTabs() {
+    const { theme } = useAppTheme();
     return (
         <Tab.Navigator
           screenOptions={({ route }) => ({
-            tabBarActiveTintColor: '#237A57',
-            tabBarInactiveTintColor: '#777',
-            headerStyle: {
-                backgroundColor: '#F4FAF6',
+            tabBarActiveTintColor: theme.primary,
+            tabBarInactiveTintColor: theme.secondaryText,
+            tabBarStyle: {
+                backgroundColor: theme.surface,
+                borderTopColor: theme.border,
             },
-            headerTintColor: '#237A57',
+            headerStyle: {
+                backgroundColor: theme.background,
+            },
+            headerTintColor: theme.primary,
 
              tabBarIcon: ({ focused, color, size }) => {
                 let iconName;
@@ -61,6 +67,7 @@ function MainTabs() {
 export default function AppNavigator() {
     const [session, setSession] = useState(null);
     const [loading, setLoading] = useState(true);
+    const { theme } = useAppTheme();
 
     useEffect(() => {
         supabase.auth.getSession().then(({ data }) => {
@@ -81,9 +88,9 @@ export default function AppNavigator() {
                 flex: 1,
                 justifyContent: 'center',
                 alignContent: 'center',
-                backgroundColor: '#f4faf6',
+                backgroundColor: theme.background,
             }}>
-                <ActivityIndicator size="large" color="#237a57"/>
+                <ActivityIndicator size="large" color={theme.primary} />
 
             </View>
         );
@@ -92,9 +99,9 @@ export default function AppNavigator() {
         <Stack.Navigator
             screenOptions={{
             headerStyle: {
-                backgroundColor: '#F4FAF6',
+                backgroundColor: theme.background,
             },
-            headerTintColor: '#237A57',
+            headerTintColor: theme.primary,
         }}
         >
             {session ? (

@@ -3,9 +3,15 @@ import {
   Text, TextInput, Pressable, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator
 } from 'react-native';
 
+import { useAppTheme } from "../theme/ThemeContext";
+import { Ionicons } from '@expo/vector-icons';
+
 import { supabase } from "../lib/supabase";
 
 export default function LoginScreen({ navigation }) {
+  const { theme, isDark, toggleTheme } = useAppTheme();
+  const styles = createStyles(theme, isDark);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({});
@@ -66,17 +72,42 @@ export default function LoginScreen({ navigation }) {
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
      >
+        <Pressable
+          style={styles.themeButton}
+          onPress={toggleTheme}
+          accessibilityRole="button"
+          accessibilityLabel={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          <Ionicons
+            name={isDark ? 'sunny-outline' : 'moon-outline'}
+            size={24}
+            color={theme.primary}
+          />
+        </Pressable>
       <Text style={styles.heading}>Welcome Back</Text>
       <Text style={styles.subtitle}>Sign in to manage your therapies.</Text>
       <Text style={styles.label}>Email *</Text>
       <TextInput
          style={styles.input}
          placeholder="Enter your email"
-         value={email}
-         onChangeText={setEmail}
-         keyboardType="email-address"
-         autoCapitalize="none"
-         autoComplete="email"
+         placeholderTextColor={theme.placeholder}
+          value={email}
+          onChangeText={(value) => {
+            setEmail(value);
+
+            if (
+              errors.email &&
+              /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
+            ) {
+              setErrors(prev => ({
+                ...prev,
+                email: '',
+              }));
+            }
+          }}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoComplete="email"
        />
 
        {errors.email ? (
@@ -89,8 +120,18 @@ export default function LoginScreen({ navigation }) {
       <TextInput
         style={styles.input}
         placeholder="Enter your password"
+        placeholderTextColor={theme.placeholder}
         value={password}
-        onChangeText={setPassword}
+        onChangeText={(value) => {
+            setPassword(value);
+
+            if (errors.password && value.length > 0) {
+              setErrors(prev => ({
+                ...prev,
+                password: '',
+              }));
+            }
+        }}
         secureTextEntry
         autoComplete="current-password"
       />
@@ -113,7 +154,7 @@ export default function LoginScreen({ navigation }) {
           disabled={loading}
       >
         {loading ? (
-            <ActivityIndicator color="#FFF" />
+            <ActivityIndicator color={isDark ? theme.background : '#FFF'} />
           ) : (
             <Text style={styles.buttonText}>Sign In</Text>
         )}
@@ -132,10 +173,10 @@ export default function LoginScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme, isDark) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4FAF6',
+    backgroundColor: theme.background,
   },
   content: {
     flexGrow: 1,
@@ -144,27 +185,40 @@ const styles = StyleSheet.create({
     paddingTop: 65,
     paddingBottom: 40,
   },
+  themeButton: {
+    alignSelf: 'flex-end',
+    backgroundColor: theme.surface,
+    borderWidth: 1,
+    borderColor: theme.border,
+    borderRadius: 24,
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
   heading: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#237A57',
+    color: theme.primary,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 15,
-    color: '#666',
+    color: theme.secondaryText,
     marginBottom: 30,
   },
   label: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#333',
+    color: theme.text,
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#FFF',
+    backgroundColor: theme.surface,
+    color: theme.text,
     borderWidth: 1,
-    borderColor: '#C8DCD0',
+    borderColor: theme.border,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -172,17 +226,17 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   errorText: {
-    color: '#D64545',
+    color: theme.danger,
     fontSize: 13,
     marginTop: -10,
     marginBottom: 14,
   },
   serverError: {
-    color: '#D64545',
+    color: theme.danger,
     marginBottom: 16,
   },
   button: {
-    backgroundColor: '#237A57',
+    backgroundColor: theme.primary,
     padding: 16,
     borderRadius: 10,
     alignItems: 'center',
@@ -192,7 +246,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buttonText: {
-    color: '#FFF',
+    color: isDark ? theme.background : '#FFF',
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -201,7 +255,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   linkText: {
-    color: '#237A57',
+    color: theme.primary,
     fontSize: 14,
     fontWeight: '600',
   },

@@ -1,8 +1,10 @@
-import { View, Text, Image, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, Image, Switch, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
 import { useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useFocusEffect } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
+import { useAppTheme } from '../theme/ThemeContext';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function ProfileScreen() {
     const [loading, setLoading] = useState(false);
@@ -10,6 +12,7 @@ export default function ProfileScreen() {
     const [userEmail, setUserEmail] = useState('');
     const [profileLoading, setProfileLoading] = useState(true);
     const [profileImage, setProfileImage] = useState(null);
+    const { isDark, theme, toggleTheme } = useAppTheme();
 
     useFocusEffect(
         useCallback(() => {
@@ -92,34 +95,50 @@ export default function ProfileScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: theme.background }]}>
             <View style={styles.avatarContainer}>
                 {profileImage ? (
                     <Image source={{ uri: profileImage }} style={styles.avatar} />
                 ) : (
                     <View style={styles.avatarPlaceholder}>
-                        <Text style={styles.avatarInitial}>👤</Text>
+                        <Text style={styles.avatarInitial}><Ionicons name='person-outline' size={60} color={theme.primary} /></Text>
                     </View>
                 )}
 
-                <Pressable style={styles.photoButton} onPress={pickImage}>
-                    <Text style={styles.photoButtonText}>Change Photo</Text>
+                <Pressable style={[styles.photoButton, { backgroundColor: theme.primary }]} onPress={pickImage}>
+                    <Text style={[styles.photoButtonText, { color: isDark ? '#17241f' : '#ffffff' }]}>Change Photo</Text>
                 </Pressable>
             </View>
-            <View style={styles.card}>
+            <View style={[styles.card, { backgroundColor: theme.surface }]}>
 
                 {profileLoading ? (
                    <ActivityIndicator color='#237a57' />
                 ): (
                     <>
-                       <Text style={styles.emalLabel}>Email address</Text>
-                       <Text style={styles.emailText}>{userEmail || 'Email unavailable'}</Text>
+                       <Text style={[styles.emailLabel, { color: theme.secondaryText }]}>Email address</Text>
+                       <Text style={[styles.emailText, { color: theme.text }]}>{userEmail || 'Email unavailable'}</Text>
                     </>
                 )}
             </View>
             {error ? (
                 <Text style={styles.errorText}>{error}</Text>
             ) : null}
+
+            <View style={styles.themeRow}>
+                <Text style={{ color: theme.text, fontWeight: '500' }}>
+                    Dark Mode
+                </Text>
+
+                <Switch
+                    value={isDark}
+                    onValueChange={toggleTheme}
+                    trackColor={{
+                        false: '#CCCCCC',
+                        true: theme.primary,
+                    }}
+                    thumbColor="#FFFFFF"
+                />
+            </View>
 
             <Pressable
               style={[styles.logoutButton, loading && styles.disabled]}
@@ -239,5 +258,13 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 13,
         fontWeight: '600',
+    },
+    themeRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 16,
+        marginVertical: 12,
+        borderRadius: 12,
     },
 });

@@ -2,14 +2,19 @@ import { View, Text, StyleSheet, ActivityIndicator, Pressable } from 'react-nati
 import { useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../lib/supabase';
+import { useAppTheme } from '../theme/ThemeContext';
 
 
 export default function HomeScreen({ navigation }) {
+    const { theme } = useAppTheme();
+    const styles = createStyles(theme);
+
     const [totalTherapies, setTotalTherapies] = useState(0);
     const [upcomingTherapies, setUpcomingTherapies] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [nextTherapy, setNextTherapy] = useState(null);
+
 
     const fetchDashboard = useCallback(async () => {
         setLoading(true);
@@ -77,7 +82,7 @@ export default function HomeScreen({ navigation }) {
             </Text>
 
             {loading ? (
-                <ActivityIndicator size="large" color="#237A57" />
+                <ActivityIndicator size="large" color={theme.primary} />
             ) : error ? (
                 <Text style={styles.errorText}>{error}</Text>
             ) : (
@@ -110,7 +115,7 @@ export default function HomeScreen({ navigation }) {
                                 });
                              }
                         }}
-                        disabled={!nextTherapy.id}
+                        disabled={!nextTherapy?.id}
                     >
                         <Text style={styles.nextTitle}>
                             Next Therapy
@@ -138,22 +143,24 @@ export default function HomeScreen({ navigation }) {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F4FAF6',
+        backgroundColor: theme.background,
         padding: 20,
     },
     title: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#237A57',
+        color: theme.primary,
         marginBottom: 8,
+        textAlign: 'center',
     },
     subtitle: {
         fontSize: 14,
-        color: '#666',
+        color: theme.secondaryText,
         marginBottom: 24,
+        textAlign: 'center',
     },
     statsContainer: {
         flexDirection: 'row',
@@ -161,54 +168,54 @@ const styles = StyleSheet.create({
     },
     statCard: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: theme.surface,
         padding: 16,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: '#E0EAE4',
+        borderColor: theme.border,
         alignItems: 'center',
     },
     statNumber: {
         fontSize: 28,
         fontWeight: 'bold',
-        color: '#237A57',
+        color: theme.primary,
         marginBottom: 6,
     },
     statLabel: {
         fontSize: 13,
-        color: '#666',
+        color: theme.secondaryText,
         textAlign: 'center',
     },
     errorText: {
-        color: '#C0392B',
+        color: theme.danger,
         textAlign: 'center',
         marginTop: 20,
     },
     nextCard: {
-        backgroundColor: '#fff',
+        backgroundColor: theme.surface,
         padding: 18,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: '#E0EAE4',
+        borderColor: theme.border,
         marginTop: 16,
     },
 
     nextTitle: {
         fontSize: 17,
         fontWeight: 'bold',
-        color: '#237A57',
+        color: theme.primary,
         marginBottom: 12,
     },
 
     therapyName: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#333',
+        color: theme.text,
         marginBottom: 6,
     },
 
     therapyInfo: {
         fontSize: 14,
-        color: '#666',
+        color: theme.secondaryText,
     },
 });

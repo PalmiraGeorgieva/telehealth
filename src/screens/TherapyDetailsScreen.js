@@ -3,8 +3,11 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
 import { useCallback, useState } from 'react';
+import { useAppTheme } from '../theme/ThemeContext';
 
 export default function TherapyDetailsScreen({ route, navigation }) {
+    const { theme, isDark } = useAppTheme();
+    const styles = createStyles(theme, isDark);
     const { therapyId } = route.params ?? {};
     const [therapy, setTherapy] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -143,7 +146,7 @@ export default function TherapyDetailsScreen({ route, navigation }) {
                     <Ionicons
                        name='heart-outline'
                        size={20}
-                       color='#237a57'
+                       color={theme.primary}
                     />
                     <Text style={styles.infoText}>
                         {therapy.therapy_type}
@@ -153,7 +156,7 @@ export default function TherapyDetailsScreen({ route, navigation }) {
                     <Ionicons
                        name='calendar-outline'
                        size={20}
-                       color='#237a57'
+                       color={theme.primary}
                      />
                     <Text style={styles.infoText}>
                         {formatdate(therapy.start_date)}
@@ -163,9 +166,9 @@ export default function TherapyDetailsScreen({ route, navigation }) {
                     <Ionicons
                       name='time-outline'
                       size={20}
-                      color='#237a57'
+                      color={theme.primary}
                     />
-                    <Text style={styles.infoRow}>
+                    <Text style={styles.infoText}>
                         {therapy.duration} minutes
                     </Text>
                 </View>
@@ -174,7 +177,7 @@ export default function TherapyDetailsScreen({ route, navigation }) {
                 Description
                </Text>
                <Text style={styles.description}>
-                  {therapy.description || 'No descripton.'}
+                  {therapy.description || 'No description.'}
                </Text>
             </View>
             <View style={styles.actionsContainer}>
@@ -186,7 +189,7 @@ export default function TherapyDetailsScreen({ route, navigation }) {
                         })
                     }
                 >
-                    <Ionicons name="pencil" size={16} color="#fff" />
+                    <Ionicons name="pencil" size={16} color={isDark ? theme.background : '#fff'} />
                     <Text style={styles.actionButtonText}>Edit</Text>
                 </Pressable>
 
@@ -194,7 +197,7 @@ export default function TherapyDetailsScreen({ route, navigation }) {
                     style={[styles.actionButton, styles.deleteButton]}
                     onPress={handleDelete}
                 >
-                    <Ionicons name="trash-outline" size={16} color="#fff" />
+                    <Ionicons name="trash-outline" size={16} color={isDark ? theme.background : '#fff'} />
                     <Text style={styles.actionButtonText}>Delete</Text>
                 </Pressable>
 
@@ -202,7 +205,7 @@ export default function TherapyDetailsScreen({ route, navigation }) {
                     style={[styles.actionButton, styles.backButton]}
                     onPress={() => navigation.goBack()}
                 >
-                    <Ionicons name="arrow-back" size={16} color="#fff" />
+                    <Ionicons name="arrow-back" size={16} color={isDark ? theme.background : '#fff'} />
                     <Text style={styles.actionButtonText}>Back</Text>
                 </Pressable>
             </View>
@@ -210,10 +213,10 @@ export default function TherapyDetailsScreen({ route, navigation }) {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme, isDark) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F4FAF6',
+        backgroundColor: theme.background,
     },
     content: {
         padding: 20,
@@ -223,20 +226,20 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#F4FAF6',
+        backgroundColor: theme.background,
         padding: 20,
     },
     card: {
-        backgroundColor: '#fff',
+        backgroundColor: theme.surface,
         padding: 20,
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: '#DDEAE2',
+        borderColor: theme.border,
     },
     title: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#237A57',
+        color: theme.primary,
         marginBottom: 20,
     },
     infoRow: {
@@ -247,32 +250,32 @@ const styles = StyleSheet.create({
     },
     infoText: {
         fontSize: 16,
-        color: '#333',
+        color: theme.text,
         textTransform: 'capitalize',
     },
     divider: {
         height: 1,
-        backgroundColor: '#E0EAE4',
+        backgroundColor: theme.border,
         marginVertical: 12,
     },
     sectionTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#237A57',
+        color: theme.primary,
         marginBottom: 10,
     },
     description: {
         fontSize: 15,
-        color: '#444',
+        color: theme.text,
         lineHeight: 23,
     },
     errorText: {
-        color: '#C0392B',
+        color: theme.danger,
         textAlign: 'center',
         marginBottom: 12,
     },
     retryText: {
-        color: '#237A57',
+        color: theme.primary,
         fontWeight: 'bold',
     },
     actionsContainer: {
@@ -296,20 +299,20 @@ const styles = StyleSheet.create({
     },
 
     actionButtonText: {
-        color: '#fff',
+        color: isDark ? theme.background : '#fff',
         fontSize: 13,
         fontWeight: '600',
     },
 
     editButton: {
-        backgroundColor: '#237A57',
+        backgroundColor: theme.primary,
     },
 
     deleteButton: {
-        backgroundColor: '#C0392B',
+        backgroundColor: theme.danger,
     },
 
     backButton: {
-        backgroundColor: '#64748B',
+        backgroundColor: isDark ? '#94a3b8' : '#64748b',
     },
 });

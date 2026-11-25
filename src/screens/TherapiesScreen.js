@@ -3,8 +3,12 @@ import { useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
+import { useAppTheme } from '../theme/ThemeContext';
 
 export default function TherapiesScreen({ navigation }) {
+    const { theme, isDark } = useAppTheme();
+    const styles = createStyles(theme, isDark);
+
     const [therapies, setTherapies] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -62,16 +66,16 @@ export default function TherapiesScreen({ navigation }) {
         >
            <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>{item.name}</Text>
-            <Ionicons name='chevron-forward' size={20} color='#237a57' />
+            <Ionicons name='chevron-forward' size={20} color={theme.primary} />
            </View>
            <Text style={styles.cardType}>{item.therapy_type}</Text>
            <View style={styles.infoRow}>
-               <Ionicons name='calendar-outline' size={16} color='#237a57' />
+               <Ionicons name='calendar-outline' size={16} color={theme.primary} />
                <Text style={styles.infoText}>{formatDate(item.start_date)}</Text>
                <Ionicons
                     name="time-outline"
                     size={16}
-                    color="#237A57"
+                    color={theme.primary}
                 />
                 <Text style={styles.infoText}>{item.duration} min</Text>
            </View>
@@ -89,13 +93,13 @@ export default function TherapiesScreen({ navigation }) {
                     <Ionicons
                        name='add'
                        size={18}
-                       color='#fff'
+                       color={isDark ? theme.background : '#fff'}
                     />
                     <Text style={styles.addButtonText}>Add Therapy</Text>
                 </Pressable>
             </View>
             {loading ? (
-                <ActivityIndicator size='large' color='#237a57' style={styles.loader} />
+                <ActivityIndicator size='large' color={theme.primary} style={styles.loader} />
             ) : error ? (
                  <View style={styles.emptyContainer}>
                     <Text style={styles.errorText}>{error}</Text>
@@ -116,7 +120,7 @@ export default function TherapiesScreen({ navigation }) {
                             <Ionicons
                               name='heart-outline'
                               size={48}
-                              color='#237a57'
+                              color={theme.primary}
                              />
                             <Text style={styles.emptyText}>No therapies yet.</Text>
                             <Text style={styles.emptySubtitle}>Add your first therapy to get started.</Text>
@@ -129,10 +133,10 @@ export default function TherapiesScreen({ navigation }) {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme, isDark) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F4FAF6',
+        backgroundColor: theme.background,
         padding: 20,
     },
     header: {
@@ -144,10 +148,10 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#237A57',
+        color: theme.primary,
     },
     addButton: {
-        backgroundColor: '#237A57',
+        backgroundColor: theme.primary,
         flexDirection: 'row',
         alignItems: 'center',
         gap: 4,
@@ -156,7 +160,7 @@ const styles = StyleSheet.create({
         borderRadius: 20,
     },
     addButtonText: {
-        color: '#fff',
+        color: isDark ? theme.background : '#fff',
         fontSize: 13,
         fontWeight: '500',
     },
@@ -165,12 +169,12 @@ const styles = StyleSheet.create({
         flexGrow: 1,
     },
     card: {
-        backgroundColor: '#fff',
+        backgroundColor: theme.surface,
         padding: 16,
         borderRadius: 12,
         marginBottom: 12,
         borderWidth: 1,
-        borderColor: '#E0EAE4',
+        borderColor: theme.border,
     },
     cardHeader: {
         flexDirection: 'row',
@@ -181,12 +185,12 @@ const styles = StyleSheet.create({
     cardTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#237A57',
+        color: theme.primary,
         flex: 1,
     },
     cardType: {
         fontSize: 14,
-        color: '#666',
+        color: theme.secondaryText,
         marginBottom: 12,
         textTransform: 'capitalize',
     },
@@ -197,7 +201,7 @@ const styles = StyleSheet.create({
     },
     infoText: {
         fontSize: 13,
-        color: '#444',
+        color: theme.text,
         marginRight: 12,
     },
     loader: {
@@ -212,22 +216,22 @@ const styles = StyleSheet.create({
     emptyText: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#237A57',
+        color: theme.primary,
         marginTop: 12,
     },
     emptySubtitle: {
         fontSize: 14,
-        color: '#777',
+        color: theme.secondaryText,
         textAlign: 'center',
         marginTop: 8,
     },
     errorText: {
-        color: '#C0392B',
+        color: theme.danger,
         textAlign: 'center',
         marginBottom: 12,
     },
     retryText: {
-        color: '#237A57',
+        color: theme.primary,
         fontWeight: 'bold',
     },
 });

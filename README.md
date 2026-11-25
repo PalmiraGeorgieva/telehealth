@@ -4,8 +4,8 @@
 
 Telehealth is a mobile application for organizing personal therapies, exercises, and progress. The MVP focuses on a simple, accessible experience: users will be able to sign in, manage their therapy sessions, and review their records.
 
-**Repository:** https://github.com/PalmiraGeorgieva/telehealth  
-**Android APK:** _To be added after an EAS Build_  
+**Repository:** https://github.com/PalmiraGeorgieva/telehealth
+**Android APK:** _To be added after an EAS Build_
 **Exam submission deadline:** December 8, 2026, 15:59
 
 ## Tech Stack
@@ -34,22 +34,22 @@ Telehealth is a mobile application for organizing personal therapies, exercises,
 
 ### In progress / Awaiting verification
 
-- [ ] Implement and test Therapy Form with name, description, duration, and validation (initial code drafted; phone test not yet confirmed)
-- [ ] Confirm latest navigation changes are committed and pushed
+- [x] Implement and test Therapy Form with name, description, duration, and validation (initial code drafted; phone test not yet confirmed)
+- [x] Confirm latest navigation changes are committed and pushed
 
 ### Planned
 
-- [ ] Add therapy type selector and date picker (non-text inputs)
-- [ ] Connect app to Supabase
-- [ ] Implement registration, login, and logout
-- [ ] Protect authenticated screens and persist login session
-- [ ] Fetch therapy list from Supabase (READ)
-- [ ] Save new therapies (CREATE)
-- [ ] Edit existing therapies (UPDATE)
-- [ ] Delete therapies (DELETE)
-- [ ] Navigate from therapy list to details with a therapy ID in route params
-- [ ] Add loading, empty, error, and pull-to-refresh states
-- [ ] Add profile image selection and upload (native feature)
+- [x] Add therapy type selector and date picker (non-text inputs)
+- [x] Connect app to Supabase
+- [x] Implement registration, login, and logout
+- [x] Protect authenticated screens and persist login session
+- [x] Fetch therapy list from Supabase (READ)
+- [x] Save new therapies (CREATE)
+- [x] Edit existing therapies (UPDATE)
+- [x] Delete therapies (DELETE)
+- [x] Navigate from therapy list to details with a therapy ID in route params
+- [x] Add loading, empty, error, and pull-to-refresh states
+- [x] Add profile image selection and upload (native feature)
 - [ ] Polish responsiveness, safe areas, keyboard handling, and validation
 - [ ] Test the complete user flow on Android
 - [ ] Produce an Android APK using EAS Build and add its link above
@@ -104,13 +104,13 @@ _This section follows the SoftUni React Native Functional Guide structure. Items
 
 ### 1. Project Overview
 
-**Application name:** Telehealth — Therapy Tracker  
-**Category:** Health / Productivity  
+**Application name:** Telehealth — Therapy Tracker
+**Category:** Health / Productivity
 **Purpose:** Help users organize therapy sessions and track related information through a mobile interface. The first version focuses on personal therapy records rather than medical consultations or clinical advice.
 
 ### 2. User Access & Permissions
 
-**Guest — Planned:** Access Login and Register screens only.  
+**Guest — Planned:** Access Login and Register screens only.
 **Authenticated user — Planned:** Access Home, Therapies, Profile, Therapy Details, and Therapy Form; create, edit, and delete their own therapy records.
 
 ### 3. Authentication & Session Handling — Planned
@@ -119,7 +119,7 @@ On app launch, check the saved Supabase session. If no valid session exists, sho
 
 ### 4. Navigation Structure
 
-**Implemented:** Bottom Tab Navigator with Home, Therapies, and Profile, nested inside a Native Stack Navigator with Therapy Form and Therapy Details.  
+**Implemented:** Bottom Tab Navigator with Home, Therapies, and Profile, nested inside a Native Stack Navigator with Therapy Form and Therapy Details.
 **Planned:** Separate Auth Navigator and protected root navigation based on session state.
 
 ### 5. List → Details Flow — Planned
@@ -128,18 +128,18 @@ Display the user's therapies in a list on the Therapies screen. Selecting an ite
 
 ### 6. Data Source & Backend — Planned
 
-**Backend:** Supabase (PostgreSQL, Authentication, Storage).  
-**READ:** Fetch the signed-in user's therapy records.  
-**CREATE:** Save a validated Therapy Form.  
-**UPDATE:** Edit an existing therapy.  
-**DELETE:** Remove a therapy after confirmation.  
+**Backend:** Supabase (PostgreSQL, Authentication, Storage).
+**READ:** Fetch the signed-in user's therapy records.
+**CREATE:** Save a validated Therapy Form.
+**UPDATE:** Edit an existing therapy.
+**DELETE:** Remove a therapy after confirmation.
 Refresh the list after mutations and support pull-to-refresh. No hardcoded therapy records will be used as the final data source.
 
 ### 7. Forms & Validation — In progress / Planned
 
-**Therapy Form:** Name (required), description (required), and duration (positive whole number). The first version of the form is drafted but not yet confirmed as tested.  
-**Additional inputs — Planned:** Therapy type picker and date picker.  
-**Authentication forms — Planned:** Email and password with required, format, and minimum-length rules.  
+**Therapy Form:** Name (required), description (required), and duration (positive whole number). The first version of the form is drafted but not yet confirmed as tested.
+**Additional inputs — Planned:** Therapy type picker and date picker.
+**Authentication forms — Planned:** Email and password with required, format, and minimum-length rules.
 **Keyboard handling:** Use `KeyboardAvoidingView` and scrollable content; test on Android.
 
 ### 8. Native Device Features — Planned

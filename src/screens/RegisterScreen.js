@@ -2,13 +2,17 @@ import { useState } from "react";
 import { Text, TextInput, Pressable, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from "react-native";
 
 import { supabase } from "../lib/supabase";
+import { useAppTheme } from "../theme/ThemeContext";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function RegisterScreen({ navigation}) {
+    const { theme, isDark, toggleTheme } = useAppTheme();
+    const styles = createStyles(theme, isDark);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
-    const [errors, setErrors] = useState('');
+    const [errors, setErrors] = useState({});
     const [message, setMessage] = useState('');
 
     const validateForm = () => {
@@ -60,9 +64,9 @@ export default function RegisterScreen({ navigation}) {
                 const { error: signOutError } = await supabase.auth.signOut();
 
                 if (signOutError) {
-                    setErrors(
-                        signOutError.message
-                    );
+                    setErrors({
+                        server: signOutError.message,
+                    });
                     return;
                 }
             }
@@ -72,7 +76,6 @@ export default function RegisterScreen({ navigation}) {
                 return;
             }*/
 
-            setSuccess('Registration successful! Plese sign in.')
             navigation.navigate('Login');
 
 
@@ -96,6 +99,18 @@ export default function RegisterScreen({ navigation}) {
                 contentContainerStyle={styles.content}
                 keyboardShouldPersistTaps='handled'
             >
+                <Pressable
+                    style={styles.themeButton}
+                    onPress={toggleTheme}
+                    accessibilityRole="button"
+                    accessibilityLabel={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+                >
+                    <Ionicons
+                        name={isDark ? 'sunny-outline' : 'moon-outline'}
+                        size={24}
+                        color={theme.primary}
+                    />
+                </Pressable>
                 <Text style={styles.heading}>Create Account</Text>
                 <Text style={styles.subtitle}>
                     Register to start managing your therapies.
@@ -105,8 +120,21 @@ export default function RegisterScreen({ navigation}) {
                 <TextInput
                     style={styles.input}
                     placeholder="Enter your email"
+                    placeholderTextColor={theme.placeholder}
                     value={email}
-                    onChangeText={setEmail}
+                    onChangeText={(value) => {
+                        setEmail(value);
+
+                        if (
+                            errors.email &&
+                            /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
+                        ) {
+                            setErrors((prev) => ({
+                                ...prev,
+                                email: '',
+                            }));
+                        }
+                    }}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoComplete="email"
@@ -119,10 +147,22 @@ export default function RegisterScreen({ navigation}) {
                 <TextInput
                     style={styles.input}
                     placeholder="Enter your password"
+                    placeholderTextColor={theme.placeholder}
                     value={password}
-                    onChangeText={setPassword}
+                    onChangeText={(value) => {
+                        setPassword(value);
+
+                        setErrors(prev => ({
+                            ...prev,
+                            password: value.length >= 6 ? '' : prev.password,
+                            confirmPassword:
+                                value === confirmPassword && confirmPassword
+                                    ? ''
+                                    : prev.confirmPassword,
+                        }));
+                    }}
                     secureTextEntry
-                    autoComplete="password"
+                    autoComplete="new-password"
                 />
                 {errors.password ? (
                     <Text style={styles.errorText}>{errors.password}</Text>
@@ -132,9 +172,20 @@ export default function RegisterScreen({ navigation}) {
                 <TextInput
                     style={styles.input}
                     placeholder="Confirm your password"
+                    placeholderTextColor={theme.placeholder}
                     value={confirmPassword}
-                    onChangeText={setConfirmPassword}
+                    onChangeText={(value) => {
+                        setConfirmPassword(value);
+
+                        if (errors.confirmPassword && value.length > 0 &&  value === password) {
+                            setErrors((prev) => ({
+                                ...prev,
+                                confirmPassword: '',
+                            }));
+                        }
+                    }}
                     secureTextEntry
+                    autoComplete="new-password"
                 />
                 {errors.confirmPassword ? (
                     <Text style={styles.errorText}>{errors.confirmPassword}</Text>
@@ -154,7 +205,7 @@ export default function RegisterScreen({ navigation}) {
                     disabled={loading}
                 >
                     {loading ? (
-                        <ActivityIndicator color="#fff" />
+                        <ActivityIndicator  color={isDark ? theme.background : '#fff'} />
                     ) : (
                         <Text style={styles.buttonText}>Register</Text>
                     )}
@@ -173,10 +224,10 @@ export default function RegisterScreen({ navigation}) {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme, isDark) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F4FAF6',
+        backgroundColor: theme.background,
     },
     content: {
         flexGrow: 1,
@@ -185,30 +236,43 @@ const styles = StyleSheet.create({
         paddingTop: 65,
         paddingBottom: 40,
     },
+     themeButton: {
+        alignSelf: 'flex-end',
+        backgroundColor: theme.surface,
+        borderWidth: 1,
+        borderColor: theme.border,
+        borderRadius: 24,
+        width: 44,
+        height: 44,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
     heading: {
         fontSize: 28,
         fontWeight: 'bold',
-        color: '#237A57',
+        color: theme.primary,
         marginBottom: 8,
     },
 
     subtitle: {
         fontSize: 15,
-        color: '#666',
+        color: theme.secondaryText,
         marginBottom: 30,
     },
 
     label: {
         fontSize: 15,
         fontWeight: '600',
-        color: '#333',
+        color: theme.text,
         marginBottom: 8,
     },
 
     input: {
-        backgroundColor: '#FFF',
+        backgroundColor: theme.surface,
+        color: theme.text,
         borderWidth: 1,
-        borderColor: '#C8DCD0',
+        borderColor: theme.border,
         borderRadius: 12,
         paddingHorizontal: 16,
         paddingVertical: 14,
@@ -216,23 +280,23 @@ const styles = StyleSheet.create({
         marginBottom: 18,
     },
     errorText: {
-        color: '#d64545',
+        color: theme.danger,
         fontSize: 13,
         marginTop: -10,
         marginBottom: 14,
 
     },
     serverError: {
-       color: '#d64545',
+       color: theme.danger,
        marginBottom: 16,
     },
     successText: {
-        color: '#237a57',
+        color: theme.success,
         marginBottom: 16,
     },
 
     button: {
-        backgroundColor: '#237a57',
+        backgroundColor: theme.primary,
         padding: 16,
         borderRadius: 10,
         alignItems: 'center',
@@ -242,7 +306,7 @@ const styles = StyleSheet.create({
         opacity: 0.6,
     },
     buttonText: {
-        color: '#fff',
+        color: isDark ? theme.background : '#FFF',
         fontSize: 16,
         fontWeight: 'bold',
     },
@@ -251,7 +315,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     linkText: {
-        color: '#237a57',
+        color: theme.primary,
         fontSize: 14,
         fontWeight: '600',
     },
