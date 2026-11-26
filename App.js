@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { supabase } from "./src/lib/supabase";
 import { useAppTheme, ThemeProvider } from "./src/theme/ThemeContext";
 import { NavigationContainer, DarkTheme, DefaultTheme } from "@react-navigation/native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 function AppContent() {
   const { isDark, theme } = useAppTheme();
@@ -60,12 +61,14 @@ export default function App() {
 
 
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <SafeAreaProvider>
       <ThemeProvider>
         <AppContent />
       </ThemeProvider>
 
     </SafeAreaProvider>
+    </GestureHandlerRootView>
 
   );
 }

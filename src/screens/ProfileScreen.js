@@ -1,10 +1,12 @@
 import { View, Text, Image, Switch, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
-import { useState, useCallback } from 'react';
+import { useState, useCallback} from 'react';
 import { supabase } from '../lib/supabase';
 import { useFocusEffect } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { useAppTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImageManipulator from 'expo-image-manipulator';
+import { decode } from 'base64-arraybuffer';
 
 export default function ProfileScreen() {
     const [loading, setLoading] = useState(false);
@@ -12,6 +14,7 @@ export default function ProfileScreen() {
     const [userEmail, setUserEmail] = useState('');
     const [profileLoading, setProfileLoading] = useState(true);
     const [profileImage, setProfileImage] = useState(null);
+    const [uploading, setUploading] = useState(false);
     const { isDark, theme, toggleTheme } = useAppTheme();
 
     useFocusEffect(
@@ -33,6 +36,37 @@ export default function ProfileScreen() {
                     if(active) {
                         setUserEmail(user.email ?? '');
                     }
+
+                    const filePath = `${user.id}/avatar.jpg`;
+
+                    const { data: avatarFiles, error: storageError } = await supabase.storage
+                      .from('avatars')
+                      .list(user.id, {
+                        search: 'avatar.jpg',
+                      });
+
+                    if(storageError) throw storageError;
+
+                    const hasAvatar = avatarFiles?.some(
+                        file => file.name === 'avatar.jpg'
+                    );
+
+                    if(hasAvatar) {
+                        const { data, error: urlError } = await supabase.storage
+                         .from('avatars')
+                         .createSignedUrl(filePath, 3600)
+                        ;
+
+                        if(urlError) throw urlError;
+
+                        if(active){
+                            setProfileImage(data.signedUrl)
+                        }
+                    } else {
+                        if(active) {
+                            setProfileImage(null);
+                        }
+                    }
                 } catch (error) {
                     if(active) {
                         setError(error.message || 'Failed to load profile.');
@@ -52,25 +86,76 @@ export default function ProfileScreen() {
     );
 
     const pickImage = async () => {
-        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+       if (uploading) return;
 
-        if(!permission.granted) {
-            setError('Gallery permission is required.');
-            return;
+       setUploading(true);
+       setError('');
+
+        try {
+            const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+            if (!permission.granted) {
+                throw new Error("Gallery permission is required.");
+
+            }
+
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ['images'],
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 0.8,
+            });
+
+            if (result.canceled || !result.assets?.length) return;
+
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+            if (userError || !user) {
+                throw new Error("Please log in again.");
+
+            }
+
+            const context = ImageManipulator.ImageManipulator.manipulate(result.assets[0].uri);
+
+            context.resize({
+                width: 400,
+                height: 400,
+            });
+
+            const image = await context.renderAsync();
+
+            const processedImage = await image.saveAsync({
+                compress: 0.8,
+                format: ImageManipulator.SaveFormat.JPEG,
+                base64: true,
+            });
+
+            const filePath = `${user.id}/avatar.jpg`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('avatars')
+                .upload(filePath, decode(processedImage.base64), {
+                    contentType: 'image/jpeg',
+                    upsert: true,
+                })
+                ;
+
+            if (uploadError) throw uploadError;
+
+            const { data, error: urlError } = await supabase.storage
+                .from('avatars')
+                .createSignedUrl(filePath, 3600);
+
+            if (urlError) throw urlError;
+
+             setProfileImage(data.signedUrl);
+
+        } catch (error) {
+            setError(error.message || 'Failed to upload photo.');
+        } finally {
+            setUploading(false);
         }
-
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
-            allowsEditing: true,
-            aspect: [1, 1],
-            quality: 0.8,
-        });
-
-        if (!result.canceled && result.assets?.length > 0) {
-            setProfileImage(result.assets[0].uri);
-            setError('');
-        }
-    }
+    };
 
     const handleLogout = async () => {
         if (loading) return;
@@ -105,8 +190,19 @@ export default function ProfileScreen() {
                     </View>
                 )}
 
-                <Pressable style={[styles.photoButton, { backgroundColor: theme.primary }]} onPress={pickImage}>
-                    <Text style={[styles.photoButtonText, { color: isDark ? '#17241f' : '#ffffff' }]}>Change Photo</Text>
+                <Pressable style={[styles.photoButton, { backgroundColor: theme.primary }, uploading && styles.disabled]}
+                  onPress={pickImage}
+                  disabled={uploading || loading || profileLoading}
+                >
+                    {uploading ? (
+                        <ActivityIndicator
+                           color={isDark ? theme.background : '#fff'}
+                        />
+                    ) : (
+                    <Text style={[styles.photoButtonText, { color: isDark ? theme.background : '#ffffff' }]}>
+                        Change Photo
+                    </Text>
+                    )}
                 </Pressable>
             </View>
             <View style={[styles.card, { backgroundColor: theme.surface }]}>
@@ -143,7 +239,7 @@ export default function ProfileScreen() {
             <Pressable
               style={[styles.logoutButton, loading && styles.disabled]}
               onPress={handleLogout}
-              disabled={loading}
+              disabled={loading || uploading}
             >
                 {loading ? (
                     <ActivityIndicator color='#fff' />

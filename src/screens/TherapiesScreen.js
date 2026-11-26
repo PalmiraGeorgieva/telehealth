@@ -1,9 +1,10 @@
-import { View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Alert, FlatList, Pressable, ActivityIndicator } from 'react-native';
 import { useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
 import { useAppTheme } from '../theme/ThemeContext';
+import SwipeableTherapyCard from '../components/SwipeableTherapyCard';
 
 export default function TherapiesScreen({ navigation }) {
     const { theme, isDark } = useAppTheme();
@@ -11,12 +12,16 @@ export default function TherapiesScreen({ navigation }) {
 
     const [therapies, setTherapies] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState('');
 
-    const fetchTherapies = useCallback(async () => {
-        setLoading(true);
+    const fetchTherapies = useCallback(async (isRefreshing = false) => {
+        if (isRefreshing) {
+            setRefreshing(true);
+        } else {
+            setLoading(true);
+        }
         setError('');
-
         try {
             const { data: { user }, error: useError } = await supabase.auth.getUser();
 
@@ -38,8 +43,13 @@ export default function TherapiesScreen({ navigation }) {
             setError(error.message || 'Failed to load therapies.');
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
     }, []);
+
+    const handleRefresh = () => {
+      fetchTherapies(true);
+    };
 
     useFocusEffect(
         useCallback(() => {
@@ -55,7 +65,65 @@ export default function TherapiesScreen({ navigation }) {
         return `${day}.${month}.${year}`;
     };
 
+    const handleDelete = (therapyId) => {
+        Alert.alert(
+            'Delete Therapy',
+            'Are you sure you want to delete this therapy?',
+            [
+                {
+                    text: 'Cancel',
+                    style: 'cancel',
+                },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            const {
+                                data: { user },
+                                error: userError
+                            } = await supabase.auth.getUser();
+
+                            if (userError || !user) {
+                                throw new Error('Please log in again.');
+                            }
+
+                            const { data, error } = await supabase
+                                .from('therapies')
+                                .delete()
+                                .eq('id', therapyId)
+                                .eq('user_id', user.id)
+                                .select('id');
+
+                            if (error) {
+                                throw error;
+                            }
+
+                            if (!data?.length) {
+                                throw new Error('Therapy could not be deleted.');
+                            }
+
+                            setTherapies(prev =>
+                                prev.filter(therapy => therapy.id !== therapyId)
+                            );
+
+                        } catch (error) {
+                            Alert.alert(
+                                'Error',
+                                error.message || 'Failed to delete therapy.'
+                            );
+                        }
+                    },
+                },
+            ]
+        );
+    };
+
     const renderTherapy = ({ item }) => (
+        <SwipeableTherapyCard
+           onEdit={() => navigation.navigate('TherapyForm', { therapyId: item.id })}
+           onDelete={() => handleDelete(item.id)}
+        >
         <Pressable
             style={styles.card}
             onPress={() =>
@@ -80,6 +148,7 @@ export default function TherapiesScreen({ navigation }) {
                 <Text style={styles.infoText}>{item.duration} min</Text>
            </View>
         </Pressable>
+        </SwipeableTherapyCard>
     );
 
     return (
@@ -103,7 +172,7 @@ export default function TherapiesScreen({ navigation }) {
             ) : error ? (
                  <View style={styles.emptyContainer}>
                     <Text style={styles.errorText}>{error}</Text>
-                    <Pressable onPress={fetchTherapies}>
+                    <Pressable onPress={() => fetchTherapies()}>
                         <Text style={styles.retryText}>Try again</Text>
                     </Pressable>
                  </View>
@@ -113,8 +182,8 @@ export default function TherapiesScreen({ navigation }) {
                     keyExtractor={(item) => item.id}
                     renderItem={renderTherapy}
                     contentContainerStyle={styles.listContent}
-                    onRefresh={fetchTherapies}
-                    refreshing={loading}
+                    onRefresh={handleRefresh}
+                    refreshing={refreshing}
                     ListEmptyComponent={
                         <View style={styles.emptyContainer}>
                             <Ionicons
