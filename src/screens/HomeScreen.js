@@ -1,9 +1,10 @@
-import { View, Text, StyleSheet, ActivityIndicator, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Pressable, Image, ScrollView, Alert} from 'react-native';
 import { useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../lib/supabase';
 import { useAppTheme } from '../theme/ThemeContext';
-
+import { Ionicons } from '@expo/vector-icons';
+import SwipeableTherapyCard from '../components/SwipeableTherapyCard';
 
 export default function HomeScreen({ navigation }) {
     const { theme } = useAppTheme();
@@ -67,19 +68,83 @@ export default function HomeScreen({ navigation }) {
         }
     }, []);
 
+
     useFocusEffect(
         useCallback(() => {
             fetchDashboard();
         }, [fetchDashboard])
     );
 
+    const handleDelete = (therapyId) => {
+        Alert.alert(
+            'Delete Therapy',
+            'Are you sure you want to delete this therapy?',
+            [
+                {
+                    text: 'Cancel',
+                    style: 'cancel',
+                },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            const {
+                                data: { user },
+                                error: userError
+                            } = await supabase.auth.getUser();
+
+                            if (userError || !user) {
+                                throw new Error('Please log in again.');
+                            }
+
+                            const { data, error } = await supabase
+                                .from('therapies')
+                                .delete()
+                                .eq('id', therapyId)
+                                .eq('user_id', user.id)
+                                .select('id');
+
+                            if (error) {
+                                throw error;
+                            }
+
+                            if (!data?.length) {
+                                throw new Error(
+                                    'Therapy could not be deleted.'
+                                );
+                            }
+
+                            await fetchDashboard();
+
+                        } catch (error) {
+                            Alert.alert(
+                                'Error',
+                                error.message || 'Failed to delete therapy.'
+                            );
+                        }
+                    },
+                },
+            ]
+        );
+    };
+
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Welcome to Telehealth</Text>
+        <ScrollView
+            style={{ backgroundColor: theme.background }}
+            contentContainerStyle={styles.container}
+            showsVerticalScrollIndicator={false}
+        >
+                <Text style={styles.title}>Welcome to Telehealth</Text>
 
             <Text style={styles.subtitle}>
                 Here's an overview of your therapies.
             </Text>
+            <Image
+                source={require('../../assets/dashboard-illustration.png')}
+                style={styles.dashboardImage}
+                resizeMode="contain"
+            />
 
             {loading ? (
                 <ActivityIndicator size="large" color={theme.primary} />
@@ -89,6 +154,12 @@ export default function HomeScreen({ navigation }) {
                 <>
                     <View style={styles.statsContainer}>
                         <View style={styles.statCard}>
+                                    <Ionicons
+                                        name="clipboard-outline"
+                                        size={28}
+                                        color={theme.primary}
+                                        style={styles.statIcon}
+                                    />
                             <Text style={styles.statNumber}>
                                 {totalTherapies}
                             </Text>
@@ -98,6 +169,12 @@ export default function HomeScreen({ navigation }) {
                         </View>
 
                         <View style={styles.statCard}>
+                                    <Ionicons
+                                        name="calendar-outline"
+                                        size={28}
+                                        color={theme.primary}
+                                        style={styles.statIcon}
+                                    />
                             <Text style={styles.statNumber}>
                                 {upcomingTherapies}
                             </Text>
@@ -107,45 +184,70 @@ export default function HomeScreen({ navigation }) {
                         </View>
                     </View>
 
-                    <Pressable style={styles.nextCard}
-                        onPress={() => {
-                             if(nextTherapy?.id) {
-                                navigation.navigate('TherapyDetails', {
-                                    therapyId: nextTherapy.id,
-                                });
-                             }
-                        }}
-                        disabled={!nextTherapy?.id}
-                    >
-                        <Text style={styles.nextTitle}>
-                            Next Therapy
-                        </Text>
-
+                    <View style={styles.nextCardContainer}>
                         {nextTherapy ? (
-                            <>
-                                <Text style={styles.therapyName}>
-                                    {nextTherapy.name}
-                                </Text>
-
-                                <Text style={styles.therapyInfo}>
-                                    {nextTherapy.start_date} · {nextTherapy.duration} min
-                                </Text>
-                            </>
+                            <SwipeableTherapyCard
+                                key={nextTherapy.id}
+                                onEdit={() =>
+                                    navigation.navigate('TherapyForm', {
+                                        therapyId: nextTherapy.id,
+                                    })
+                                }
+                                onDelete={() => handleDelete(nextTherapy.id)}
+                            >
+                                <Pressable
+                                   style={styles.nextCard}
+                                   onPress={() =>
+                                    navigation.navigate('TherapyDetails', {
+                                        therapyId: nextTherapy.id,
+                                    })
+                                   }
+                                >
+                                    <View style={styles.nextHeader}>
+                                        <Ionicons
+                                             name='calendar-outline'
+                                             size={24}
+                                             color={theme.primary}
+                                         />
+                                         <Text style={styles.nextTitle}>
+                                            Next Therapy
+                                         </Text>
+                                    </View>
+                                    <Text style={styles.therapyName}>
+                                        {nextTherapy.name}
+                                    </Text>
+                                    <Text style={styles.therapyInfo}>
+                                        {nextTherapy.start_date} · {nextTherapy.duration} min
+                                    </Text>
+                                </Pressable>
+                            </SwipeableTherapyCard>
                         ) : (
-                            <Text style={styles.therapyInfo}>
-                                No upcoming therapies.
-                            </Text>
+                            <View style={styles.nextCard}>
+                                <View style={styles.nextHeader}>
+                                    <Ionicons
+                                        name='calendar-outline'
+                                        size={24}
+                                        color={theme.primary}
+                                    />
+                                    <Text style={styles.nextTitle}>
+                                        Next Therapy
+                                    </Text>
+                                </View>
+                                <Text style={styles.therapyInfo}>
+                                    No upcoming therapies.
+                                </Text>
+                            </View>
                         )}
-                    </Pressable>
+                    </View>
                 </>
             )}
-        </View>
+        </ScrollView>
     );
 }
 
 const createStyles = (theme) => StyleSheet.create({
     container: {
-        flex: 1,
+        flexGrow: 1,
         backgroundColor: theme.background,
         padding: 20,
     },
@@ -197,14 +299,9 @@ const createStyles = (theme) => StyleSheet.create({
         borderRadius: 12,
         borderWidth: 1,
         borderColor: theme.border,
-        marginTop: 16,
     },
-
-    nextTitle: {
-        fontSize: 17,
-        fontWeight: 'bold',
-        color: theme.primary,
-        marginBottom: 12,
+    nextCardContainer: {
+        marginTop: 16,
     },
 
     therapyName: {
@@ -217,5 +314,26 @@ const createStyles = (theme) => StyleSheet.create({
     therapyInfo: {
         fontSize: 14,
         color: theme.secondaryText,
+    },
+    dashboardImage: {
+        width: '100%',
+        height: 190,
+        alignSelf: 'center',
+        marginBottom: 20,
+    },
+    statIcon: {
+        marginBottom: 8,
+    },
+    nextHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        marginBottom: 12,
+    },
+
+    nextTitle: {
+        fontSize: 17,
+        fontWeight: 'bold',
+        color: theme.primary,
     },
 });

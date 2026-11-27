@@ -220,31 +220,66 @@ export default function ProfileScreen() {
                 <Text style={styles.errorText}>{error}</Text>
             ) : null}
 
-            <View style={styles.themeRow}>
-                <Text style={{ color: theme.text, fontWeight: '500' }}>
-                    Dark Mode
-                </Text>
 
+            <Text style={[styles.settingsTitle, { color: theme.primary }]}>Appearance</Text>
+            <View style={[
+                styles.themeCard,
+                {
+                    backgroundColor: theme.surface,
+                    borderColor: theme.border
+                }
+            ]}>
+                <View style={[
+                    styles.themeIcon,
+                    {
+                        backgroundColor: isDark ? '#40564a' : '#e0f0e6'
+                    }
+                ]}>
+                    <Ionicons
+                       name={isDark ? 'moon-outline' : 'sunny-outline'}
+                       size={24}
+                       color={theme.primary}
+                     />
+                </View>
+                <View style={styles.themeInfo}>
+                    <Text style={[
+                        styles.themeTitle,
+                        { color: theme.text }
+                    ]}>
+                        Dark Mode
+                    </Text>
+                    <Text style={[
+                        styles.themeDescription,
+                        { color: theme.secondaryText }
+                    ]}>
+                        {isDark
+                           ? 'Dark theme enabled'
+                           : 'Light theme enabled'}
+                    </Text>
+                </View>
                 <Switch
-                    value={isDark}
-                    onValueChange={toggleTheme}
-                    trackColor={{
-                        false: '#CCCCCC',
-                        true: theme.primary,
-                    }}
-                    thumbColor="#FFFFFF"
+                  value={isDark}
+                  onValueChange={toggleTheme}
+                  trackColor={{
+                    false: '#c5D2ca',
+                    true: theme.primary
+                  }}
+                  thumbColor={isDark ? theme.background : '#fff'}
                 />
             </View>
 
             <Pressable
-              style={[styles.logoutButton, loading && styles.disabled]}
+              style={[styles.logoutButton,{ borderColor: theme.danger }, (loading || uploading) && styles.disabled]}
               onPress={handleLogout}
               disabled={loading || uploading}
             >
                 {loading ? (
                     <ActivityIndicator color='#fff' />
                 ) : (
-                    <Text style={styles.logoutText}>Sign Out</Text>
+                    <>
+                    <Ionicons name='log-out-outline' size={20} color={theme.danger} />
+                    <Text style={[styles.logoutText,{ color: theme.danger }]}>Sign Out</Text>
+                    </>
                 )}
             </Pressable>
         </View>
@@ -287,16 +322,21 @@ const styles = StyleSheet.create({
         color: '#555',
     },
     logoutButton: {
-        backgroundColor: '#d64545',
-        padding: 16,
-        borderRadius: 10,
+        flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'center',
+        alignSelf: 'center',
+        borderWidth: 1,
+        borderRadius: 20,
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        gap: 8,
+        marginTop: 16,
     },
 
     logoutText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: 'bold',
+        fontSize: 14,
+        fontWeight: '600',
     },
     disabled: {
         opacity: 0.6,
@@ -362,5 +402,42 @@ const styles = StyleSheet.create({
         padding: 16,
         marginVertical: 12,
         borderRadius: 12,
+    },
+    settingsTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        marginTop: 20,
+        marginBottom: 10,
+    },
+
+    themeCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderRadius: 16,
+        padding: 14,
+        gap: 12,
+    },
+
+    themeIcon: {
+        width: 44,
+        height: 44,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+
+    themeInfo: {
+        flex: 1,
+    },
+
+    themeTitle: {
+        fontSize: 15,
+        fontWeight: '600',
+    },
+
+    themeDescription: {
+        fontSize: 12,
+        marginTop: 4,
     },
 });
